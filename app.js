@@ -409,6 +409,13 @@ function addTaskForm() {
 }
 
 // ── Parent dashboard ───────────────────────────
+let parentFilter = null; // null = all, or userId string
+
+function setParentFilter(userId) {
+  parentFilter = (parentFilter === userId) ? null : userId;
+  renderContent();
+}
+
 function renderParent() {
   const tasks = state.tasks;
   const doneCount      = tasks.filter(t => t.status === 'done').length;
@@ -418,17 +425,28 @@ function renderParent() {
   const memberCards = children().map(m => {
     const mTasks = tasks.filter(t => t.assigneeId === m.id);
     const mDone  = mTasks.filter(t => t.status === 'done').length;
-    return `<div class="member-card">
+    const isActive = parentFilter === m.id;
+    return `<div class="member-card" onclick="setParentFilter('${m.id}')" style="cursor:pointer;transition:all 0.15s;${isActive ? 'border-color:var(--border-accent);box-shadow:0 0 0 2px var(--bg-accent);' : ''}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <div class="avatar">${m.name[0]}</div>
+        <div class="avatar" style="${isActive ? 'background:var(--fill-accent);color:#fff;' : ''}">${m.name[0]}</div>
         <div><div class="name">${m.name}</div><div class="pts">${m.points} נקודות</div></div>
       </div>
       <div class="stat">${mDone} מתוך ${mTasks.length} הושלמו היום</div>
       ${m.streakDays > 0 ? `<div style="margin-top:6px"><span class="streak-badge"><i class="ti ti-flame" aria-hidden="true"></i> ${m.streakDays} ימים ברצף</span></div>` : ''}
+      ${isActive ? `<div style="margin-top:8px;font-size:11px;color:var(--text-accent);">מציג משימות של ${m.name} בלבד · לחץ שוב לביטול</div>` : ''}
     </div>`;
   }).join('');
 
-  const allRows = tasks.map(t => taskRow(t, { showAssignee: true, showActions: true })).join('');
+  const filteredTasks = parentFilter
+    ? tasks.filter(t => t.assigneeId === parentFilter)
+    : tasks;
+
+  const filterUser = parentFilter ? byId(state.users, parentFilter) : null;
+  const listTitle  = filterUser ? `משימות של ${filterUser.name}` : 'כל המשימות';
+
+  const allRows = filteredTasks.length > 0
+    ? filteredTasks.map(t => taskRow(t, { showAssignee: !parentFilter, showActions: true })).join('')
+    : `<div style="padding:16px 0;color:var(--text-muted);font-size:14px;">אין משימות להצגה</div>`;
 
   return `
     <h2>לוח ניהול — היום</h2>
@@ -440,12 +458,16 @@ function renderParent() {
       ${metricCard('דורש טיפול', attentionCount)}
     </div>
 
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">לחצי על ילדה כדי לסנן את המשימות שלה</p>
     <div class="member-cards">${memberCards}</div>
 
     ${addTaskForm()}
 
     <div class="section">
-      <h3>כל המשימות</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="margin:0;">${listTitle} (${filteredTasks.length})</h3>
+        ${parentFilter ? `<button class="secondary" style="font-size:12px;" onclick="setParentFilter(null)">הצג הכל</button>` : ''}
+      </div>
       <div>${allRows}</div>
     </div>
   `;
