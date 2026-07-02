@@ -22,14 +22,12 @@ const SEED = {
     { id: 8, title: 'לסדר ספרים בארון',        category: 'ארגון הבית', icon: 'ti-books',           assigneeId: 'emily', freq: 'שבועי',   requiresApproval: false, points: 12, status: 'open' },
   ],
   rewards: [
-    { id: 1, label: '30 דקות מסך נוספות', cost: 20 },
-    { id: 2, label: 'בחירת קולנוע ביתי',  cost: 30 },
-    { id: 3, label: 'ארוחת בחירה',         cost: 40 },
+    { id: 1, label: 'הזמנה לבחירה מאייהרב', cost: 1000 },
   ],
 };
 
 const CATEGORIES = ['ניקיון', 'ארגון הבית', 'מיון וסדר', 'מטבח', 'כביסה', 'חיות מחמד', 'אחר'];
-const FREQ_OPTIONS = ['יומי', 'שבועי', 'חד פעמי', 'מותאם אישית'];
+const FREQ_OPTIONS = ['יומי', 'אחת ליומיים', 'אחת ל-3 ימים', 'אחת ל-4 ימים', 'אחת ל-5 ימים', 'שבועי', 'אחת לשבועיים', 'חד פעמי'];
 const CATEGORY_ICONS = {
   'ניקיון': 'ti-droplet', 'ארגון הבית': 'ti-folder', 'מיון וסדר': 'ti-sort-descending',
   'מטבח': 'ti-chef-hat', 'כביסה': 'ti-shirt', 'חיות מחמד': 'ti-paw', 'אחר': 'ti-dots',
@@ -50,14 +48,16 @@ function save(state) {
 }
 
 // ── App State ──────────────────────────────────
-let state = load() || {
-  users:   JSON.parse(JSON.stringify(SEED.users)),
-  tasks:   JSON.parse(JSON.stringify(SEED.tasks)),
-  rewards: JSON.parse(JSON.stringify(SEED.rewards)),
+const _saved = load();
+let state = _saved || {
+  users:      JSON.parse(JSON.stringify(SEED.users)),
+  tasks:      JSON.parse(JSON.stringify(SEED.tasks)),
   nextTaskId: 9,
-  persona: 'parent_mom',
-  view:    'dashboard',
+  persona:    'parent_mom',
+  view:       'dashboard',
 };
+// rewards always come from SEED so parent can update them via code
+state.rewards = JSON.parse(JSON.stringify(SEED.rewards));
 
 // ── Helpers ────────────────────────────────────
 const byId = (arr, id) => arr.find(x => x.id === id);
