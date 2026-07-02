@@ -207,6 +207,74 @@ function progressBar(done, total) {
   </div>`;
 }
 
+// ── Edit task modal ────────────────────────────
+function openEditTask(taskId) {
+  const task = byId(state.tasks, taskId);
+  if (!task) return;
+
+  const assigneeOpts = [...children(), ...parents()].map(u =>
+    `<option value="${u.id}" ${u.id === task.assigneeId ? 'selected' : ''}>${u.name}</option>`).join('');
+  const catOpts = CATEGORIES.map(c =>
+    `<option value="${c}" ${c === task.category ? 'selected' : ''}>${c}</option>`).join('');
+  const freqOpts = FREQ_OPTIONS.map(f =>
+    `<option value="${f}" ${f === task.freq ? 'selected' : ''}>${f}</option>`).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-body').innerHTML = `
+    <h3>עריכת משימה</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <div class="form-group"><label>שם המשימה</label>
+        <input type="text" id="et-title" value="${task.title}" /></div>
+      <div class="form-group"><label>קטגוריה</label>
+        <select id="et-cat">${catOpts}</select></div>
+      <div class="form-group"><label>תדירות</label>
+        <select id="et-freq">${freqOpts}</select></div>
+      <div class="form-group"><label>משויך ל</label>
+        <select id="et-assignee">${assigneeOpts}</select></div>
+      <div class="form-group"><label>נקודות</label>
+        <input type="number" id="et-points" min="1" max="50" value="${task.points}" /></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="et-approval" ${task.requiresApproval ? 'checked' : ''} />
+        דורש אישור הורה
+      </label>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="secondary" style="color:var(--text-warning);border-color:var(--fill-warning);"
+        onclick="deleteTask(${taskId})">מחק משימה</button>
+      <div style="display:flex;gap:8px;">
+        <button class="secondary" onclick="closeModal()">ביטול</button>
+        <button class="primary" onclick="saveEditTask(${taskId})">שמור שינויים</button>
+      </div>
+    </div>`;
+}
+
+function saveEditTask(taskId) {
+  const task = byId(state.tasks, taskId);
+  if (!task) return;
+  const title = document.getElementById('et-title')?.value.trim();
+  if (!title) { toast('נא להזין שם'); return; }
+  task.title           = title;
+  task.category        = document.getElementById('et-cat')?.value || task.category;
+  task.freq            = document.getElementById('et-freq')?.value || task.freq;
+  task.assigneeId      = document.getElementById('et-assignee')?.value || task.assigneeId;
+  task.points          = Number(document.getElementById('et-points')?.value) || task.points;
+  task.requiresApproval = document.getElementById('et-approval')?.checked || false;
+  task.icon            = CATEGORY_ICONS[task.category] || 'ti-dots';
+  persist();
+  closeModal();
+  renderContent();
+  toast('המשימה עודכנה ✓');
+}
+
+function deleteTask(taskId) {
+  if (!confirm('למחוק את המשימה?')) return;
+  state.tasks = state.tasks.filter(t => t.id !== taskId);
+  persist();
+  closeModal();
+  renderContent();
+  toast('המשימה נמחקה');
+}
+
 // ── Task row (parent list) ─────────────────────
 function taskRow(task, opts = {}) {
   const assignee = byId(state.users, task.assigneeId);
@@ -221,6 +289,8 @@ function taskRow(task, opts = {}) {
       action = `<button class="secondary" onclick="toast('נשלחה תזכורת 📣')">תזכורת</button>`;
   }
 
+  const editBtn = `<button class="secondary" style="padding:4px 10px;flex-shrink:0;" onclick="openEditTask(${task.id})" title="עריכה"><i class="ti ti-pencil" aria-hidden="true"></i> עריכה</button>`;
+
   return `<div class="task-row">
     <i class="ti ${task.icon} icon" aria-hidden="true"></i>
     <div class="info">
@@ -229,6 +299,7 @@ function taskRow(task, opts = {}) {
     </div>
     ${pill(task.status)}
     ${action}
+    ${opts.showActions ? editBtn : ''}
   </div>`;
 }
 
