@@ -1,4 +1,4 @@
-const CACHE = 'mishimot-v1';
+const CACHE = 'mishimot-v2';
 const ASSETS = ['/', '/index.html', '/style.css', '/app.js'];
 
 self.addEventListener('install', e => {
