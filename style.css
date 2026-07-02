@@ -290,9 +290,10 @@ label { font-size: 13px; color: var(--text-secondary); }
 .task-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 10px 0;
   border-top: 0.5px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .task-row:first-child { border-top: none; }
